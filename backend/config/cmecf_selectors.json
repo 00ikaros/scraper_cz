@@ -1,0 +1,55 @@
+{
+  "login": {
+    "username_input": "#loginForm\\:loginName",
+    "password_input": "#loginForm\\:password",
+    "client_code_input": "#loginForm\\:clientCode",
+    "login_button": "#loginForm\\:fbtnLogin",
+    "clear_button": "#loginForm\\:btnClear"
+  },
+
+  "case_entry": {
+    "case_number_input": "#case_number_text_area_0",
+    "all_case_ids": "#all_case_ids",
+    "run_report_button": "input[value='Run Report']"
+  },
+
+  "results_page": {
+    "bankruptcy_header": "center b font",
+    "docket_table": "tbody tr",
+    "table_header": "tbody tr th",
+    "filing_date_header": "Filing Date",
+    "doc_number_cell_width": "30",
+    "document_link": "a[href*='/doc1/']"
+  },
+
+  "document_detail": {
+    "view_document_button": "input[type='submit'][value='View Document']",
+    "form": "form"
+  },
+
+  "pdf_page": {
+    "iframe": "iframe",
+    "embed": "embed[type='application/pdf']"
+  },
+
+  "transcript_patterns": [
+    {
+      "id": "hearing_transcript",
+      "pattern": "^Transcript regarding hearing held",
+      "enabled": true,
+      "case_sensitive": false,
+      "description": "Hearing transcript from CMECF"
+    }
+  ],
+
+  "wait_times": {
+    "short": 1000,
+    "medium": 2000,
+    "long": 5000,
+    "page_load": 10000,
+    "between_documents": {
+      "min": 5000,
+      "max": 10000
+    }
+  }
+}

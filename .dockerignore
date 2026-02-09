@@ -1,0 +1,26 @@
+# Dependencies and local env
+backend/.env
+backend/__pycache__
+backend/**/__pycache__
+backend/.venv
+backend/venv
+.env
+.venv
+venv
+
+# Logs and generated files
+logs/
+downloads/
+screenshots/
+*.log
+session_state.json
+
+# Git and IDE
+.git
+.gitignore
+.cursor
+*.md
+!README.md
+
+# Don’t need these for build
+run.py

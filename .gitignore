@@ -1,0 +1,32 @@
+# Secrets – never commit
+backend/.env
+.env
+.env.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Logs and generated data
+logs/
+*.log
+downloads/
+screenshots/
+session_state.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

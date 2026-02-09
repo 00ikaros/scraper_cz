@@ -1,0 +1,95 @@
+{
+  "page1_login": {
+    "username_input": "input[name='username'], input[id='username']",
+    "password_input": "input[name='password'], input[id='password']",
+    "password_field_container": "div#passwordFieldDiv",
+    "continue_button": "m-button#formSubmit:has-text('Continue'), #formSubmit:has-text('Continue')",
+    "signin_button": "m-button#formSubmit:has-text('Sign In'), #formSubmit:has-text('Sign In')"
+  },
+  
+  "page1_search": {
+    "content_type_dropdown": "div.select[role='button'][tabindex='0']",
+    "court_dockets_option": "text='Court Dockets'",
+    "select_sources_button": "div.advanced-search-button, span:has-text('Select Sources')",
+
+    "keywords_input": "div:has(span:has-text('Keywords')) input[type='text']",
+    "court_input": "input[placeholder='Type to select from the list']",
+    "judge_input": "input[aria-label='Judge'], input[placeholder*='judge' i]",
+
+    "court_tree": "div.SelectableTree",
+    "court_checkboxes": "div.CheckboxMulti label",
+    "expand_buttons": "button.arrow[aria-label='Expandable list']",
+
+    "search_button": "div.modal-footer button.Button[component-role='success']:has-text('Search')",
+    "modal_close_button": "button.modal-close-wrapper, button[aria-label='Close']"
+  },
+  
+  "page2_results": {
+    "results_container": "div.bordered-list",
+    "result_links": "div.bordered-list a.title[href*='/product/blaw/document/']",
+    "next_page_button": "button:has-text('Next'), a[aria-label='Next page']",
+    "results_count": "text=/\\d+ results/"
+  },
+  
+  "page3_docket": {
+    "docket_section": "div.section-title:has-text('DOCKET ENTRIES')",
+    "table_header": "thead.entries-table-header",
+    "entry_rows": "tr[id^='entry-']",
+    "entry_number": "td:nth-child(1) span[title]",
+    "filed_date": "td:nth-child(2)",
+    "pdf_column": "td.view-document-link",
+    "download_button": "div.DocketAttachmentDownloadLink button",
+    "description_column": "td.description > div:first-child"
+  },
+  
+  "transcript_patterns": [
+    {
+      "id": "hearing_transcript",
+      "pattern": "^Transcript regarding Hearing Held on",
+      "enabled": true,
+      "description": "Standard hearing transcript"
+    },
+    {
+      "id": "trial_transcript",
+      "pattern": "^Transcript of Trial",
+      "enabled": false,
+      "description": "Trial transcript"
+    },
+    {
+      "id": "proceedings_transcript",
+      "pattern": "^Transcript of Proceedings",
+      "enabled": false,
+      "description": "General proceedings transcript"
+    },
+    {
+      "id": "any_transcript",
+      "pattern": "(?i)transcript",
+      "enabled": false,
+      "description": "Any document containing 'transcript'"
+    },
+    {
+      "id": "opinions_orders",
+      "pattern": "(?i)(opinion|order)",
+      "enabled": false,
+      "description": "Court opinions and orders"
+    },
+    {
+      "id": "motions_briefs",
+      "pattern": "(?i)(motion|brief)",
+      "enabled": false,
+      "description": "Motions and briefs"
+    },
+    {
+      "id": "match_all",
+      "pattern": ".*",
+      "enabled": false,
+      "description": "Match all entries (highlight everything)"
+    }
+  ],
+  
+  "wait_times": {
+    "short": 1000,
+    "medium": 2000,
+    "long": 5000
+  }
+}

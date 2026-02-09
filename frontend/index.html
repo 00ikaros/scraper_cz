@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Scraper - Control Panel</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Login screen (shown when not authenticated) -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h1 class="login-title">Document Scraper</h1>
+            <p class="login-subtitle">Sign in to continue</p>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" name="username" required autocomplete="username" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required autocomplete="current-password" placeholder="Password">
+                </div>
+                <div id="loginError" class="login-error" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary btn-login">Log in</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App (scraper) screen (shown after login) -->
+    <div id="appScreen" class="container" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <h1>Document Scraper</h1>
+            <div class="header-actions">
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+                <button type="button" class="btn btn-secondary btn-logout" id="logoutBtn">Log out</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel: Configuration -->
+            <div class="left-panel">
+                <!-- Scraper Toggle -->
+                <div class="panel-section">
+                    <div class="scraper-toggle">
+                        <button class="toggle-btn active" id="bloombergToggle" onclick="switchScraper('bloomberg')">
+                            Bloomberg Law
+                        </button>
+                        <button class="toggle-btn" id="cmecfToggle" onclick="switchScraper('cmecf')">
+                            CMECF (PACER)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Download path setting -->
+                <div class="panel-section">
+                    <h2>Download location</h2>
+                    <p class="settings-hint">Path on the server where PDFs will be saved (Bloomberg and PACER). Leave blank to use default.</p>
+                    <div class="form-group">
+                        <label for="downloadPathInput">Folder path</label>
+                        <input type="text" id="downloadPathInput" placeholder="e.g. /app/downloads or C:\Downloads" class="download-path-input">
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="saveDownloadPathBtn">Save path</button>
+                    <span id="downloadPathStatus" class="download-path-status"></span>
+                </div>
+
+                <!-- Bloomberg Configuration (default visible) -->
+                <div class="panel-section" id="bloombergPanel">
+                    <h2>Bloomberg Search Configuration</h2>
+
+                    <form id="searchForm">
+                        <div class="form-group">
+                            <label for="keywords">Keywords</label>
+                            <input
+                                type="text"
+                                id="keywords"
+                                placeholder="e.g., transcript"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="courtName">Court Name</label>
+                            <input
+                                type="text"
+                                id="courtName"
+                                placeholder="e.g., U.S. Bankruptcy Court District of Nevada"
+                                required
+                            >
+                            <small>Tip: Type partial name, you'll select from options</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="judgeName">Judge Name (Optional)</label>
+                            <input
+                                type="text"
+                                id="judgeName"
+                                placeholder="e.g., Markell (leave blank to search all judges)"
+                            >
+                            <small>Leave empty to search across all judges</small>
+                        </div>
+
+                        <!-- Selection Mode -->
+                        <div class="form-group">
+                            <label>Selection Mode</label>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="radio" name="selectionMode" value="manual" checked onchange="toggleSelectionMode()">
+                                    Manual Selection (browse & pick entries)
+                                </label>
+                                <label style="display: block;">
+                                    <input type="radio" name="selectionMode" value="automated" onchange="toggleSelectionMode()">
+                                    Automated (process range automatically)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Automated Mode Options -->
+                        <div id="automatedOptions" style="display: none; margin-left: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label>Document Range</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="number" id="rangeStart" min="1" value="1" style="width: 80px;" placeholder="From">
+                                    <span>to</span>
+                                    <input type="number" id="rangeEnd" min="1" max="50" value="50" style="width: 80px;" placeholder="To">
+                                </div>
+                                <small>Process documents from #1 to #50 (max 50 per page)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Download Mode</label>
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="radio" name="downloadMode" value="all_downloadable" checked>
+                                    Download all entries with download button
+                                </label>
+                                <label style="display: block;">
+                                    <input type="radio" name="downloadMode" value="pattern_matches">
+                                    Download only entries matching patterns
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="startBtn">
+                            Start Scraping
+                        </button>
+
+                        <button type="button" class="btn btn-danger" id="stopBtn" style="display: none;">
+                            Stop
+                        </button>
+                    </form>
+                </div>
+
+                <!-- CMECF Configuration (hidden by default) -->
+                <div class="panel-section" id="cmecfPanel" style="display: none;">
+                    <h2>CMECF Case Numbers</h2>
+
+                    <form id="cmecfForm">
+                        <div class="form-group">
+                            <label>Case Numbers</label>
+                            <div id="caseNumbersContainer">
+                                <div class="case-number-row">
+                                    <input type="text" class="case-number-input" placeholder="e.g., 10-23098-bam">
+                                    <button type="button" class="btn-remove-case" style="display: none;" onclick="removeCaseRow(this)">×</button>
+                                </div>
+                            </div>
+
+                            <!-- Smart Add Button -->
+                            <div class="add-cases-container">
+                                <div class="add-cases-dropdown">
+                                    <button type="button" class="btn btn-secondary btn-add-cases" id="addCasesBtn">
+                                        + Add Case Numbers
+                                    </button>
+                                    <div class="add-dropdown-content" id="addDropdown">
+                                        <button type="button" onclick="addCaseRows(1)">+ 1</button>
+                                        <button type="button" onclick="addCaseRows(5)">+ 5</button>
+                                        <button type="button" onclick="addCaseRows(10)">+ 10</button>
+                                        <div class="custom-add">
+                                            <input type="number" id="customAddCount" min="1" max="100" placeholder="#">
+                                            <button type="button" onclick="addCustomRows()">Add</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation Panel -->
+                        <div id="confirmationPanel" style="display: none;">
+                            <div class="confirmation-header">
+                                <h3>Confirm Case Numbers</h3>
+                                <span id="caseCount">0 cases</span>
+                            </div>
+                            <div class="confirmation-list" id="confirmationList">
+                                <!-- Case numbers will be listed here -->
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="cmecfStartBtn">
+                            Start CMECF Scraping
+                        </button>
+
+                        <button type="button" class="btn btn-danger" id="cmecfStopBtn" style="display: none;">
+                            Stop
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Job Summary -->
+                <div class="panel-section" id="jobSummary" style="display: none;">
+                    <h3>Job Summary</h3>
+                    <div class="summary-stats">
+                        <div class="stat">
+                            <span class="stat-label" id="stat1Label">Documents Processed</span>
+                            <span class="stat-value" id="docsProcessed">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Transcripts Found</span>
+                            <span class="stat-value" id="transcriptsFound">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Downloads</span>
+                            <span class="stat-value" id="transcriptsDownloaded">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Status & Interaction -->
+            <div class="right-panel">
+                <!-- Current Status -->
+                <div class="panel-section">
+                    <h2>Status</h2>
+                    <div class="status-display">
+                        <div class="current-state" id="currentState">
+                            <span class="state-icon"></span>
+                            <span class="state-text">Idle</span>
+                        </div>
+                        <div class="status-message" id="statusMessage">
+                            Ready to start scraping...
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-container" id="progressContainer" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Selection Area -->
+                <div class="panel-section" id="interactionPanel" style="display: none;">
+                    <h3 id="interactionTitle">Action Required</h3>
+                    <div id="interactionContent">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="panel-section">
+                    <h3>Activity Log</h3>
+                    <div class="activity-log" id="activityLog">
+                        <div class="log-entry log-info">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-message">Waiting to start...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Downloaded Files -->
+                <div class="panel-section" id="downloadsPanel" style="display: none;">
+                    <h3>Downloaded Files</h3>
+                    <div class="downloads-list" id="downloadsList">
+                        <!-- Downloaded files will appear here -->
+                    </div>
+                </div>
+
+                <!-- Error Report (for CMECF) -->
+                <div class="panel-section" id="errorReportPanel" style="display: none;">
+                    <h3>Errors</h3>
+                    <div class="error-list" id="errorList">
+                        <!-- Errors will appear here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="downloadErrorReport()">
+                        Download Error Report (CSV)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Toggle automated options visibility (Bloomberg)
+        function toggleSelectionMode() {
+            const mode = document.querySelector('input[name="selectionMode"]:checked').value;
+            const automatedOptions = document.getElementById('automatedOptions');
+            automatedOptions.style.display = mode === 'automated' ? 'block' : 'none';
+        }
+
+        // Switch between Bloomberg and CMECF scrapers
+        function switchScraper(scraper) {
+            const bloombergToggle = document.getElementById('bloombergToggle');
+            const cmecfToggle = document.getElementById('cmecfToggle');
+            const bloombergPanel = document.getElementById('bloombergPanel');
+            const cmecfPanel = document.getElementById('cmecfPanel');
+            const stat1Label = document.getElementById('stat1Label');
+
+            if (scraper === 'bloomberg') {
+                bloombergToggle.classList.add('active');
+                cmecfToggle.classList.remove('active');
+                bloombergPanel.style.display = 'block';
+                cmecfPanel.style.display = 'none';
+                stat1Label.textContent = 'Documents Processed';
+            } else {
+                bloombergToggle.classList.remove('active');
+                cmecfToggle.classList.add('active');
+                bloombergPanel.style.display = 'none';
+                cmecfPanel.style.display = 'block';
+                stat1Label.textContent = 'Cases Processed';
+            }
+
+            // Store current scraper
+            window.currentScraper = scraper;
+        }
+
+        // Add case number rows
+        function addCaseRows(count) {
+            const container = document.getElementById('caseNumbersContainer');
+            for (let i = 0; i < count; i++) {
+                const row = document.createElement('div');
+                row.className = 'case-number-row';
+                row.innerHTML = `
+                    <input type="text" class="case-number-input" placeholder="e.g., 10-23098-bam">
+                    <button type="button" class="btn-remove-case" onclick="removeCaseRow(this)">×</button>
+                `;
+                container.appendChild(row);
+            }
+            updateCaseCount();
+            closeAddDropdown();
+        }
+
+        // Add custom number of rows
+        function addCustomRows() {
+            const count = parseInt(document.getElementById('customAddCount').value);
+            if (count && count > 0) {
+                addCaseRows(count);
+                document.getElementById('customAddCount').value = '';
+            }
+        }
+
+        // Remove a case row
+        function removeCaseRow(button) {
+            const row = button.parentElement;
+            const container = document.getElementById('caseNumbersContainer');
+
+            // Keep at least one row
+            if (container.children.length > 1) {
+                row.remove();
+            }
+            updateCaseCount();
+        }
+
+        // Update case count display
+        function updateCaseCount() {
+            const inputs = document.querySelectorAll('.case-number-input');
+            const filledCount = Array.from(inputs).filter(input => input.value.trim() !== '').length;
+            document.getElementById('caseCount').textContent = `${filledCount} case(s)`;
+        }
+
+        // Close add dropdown
+        function closeAddDropdown() {
+            document.getElementById('addDropdown').classList.remove('show');
+        }
+
+        // Toggle dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const addBtn = document.getElementById('addCasesBtn');
+            const dropdown = document.getElementById('addDropdown');
+
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.add-cases-dropdown')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Update count on input change
+            document.getElementById('caseNumbersContainer').addEventListener('input', updateCaseCount);
+        });
+
+        // Get all case numbers
+        function getCaseNumbers() {
+            const inputs = document.querySelectorAll('.case-number-input');
+            return Array.from(inputs)
+                .map(input => input.value.trim())
+                .filter(val => val !== '');
+        }
+
+        // Show confirmation before starting
+        function showConfirmation() {
+            const caseNumbers = getCaseNumbers();
+            if (caseNumbers.length === 0) {
+                alert('Please enter at least one case number');
+                return false;
+            }
+
+            const confirmPanel = document.getElementById('confirmationPanel');
+            const confirmList = document.getElementById('confirmationList');
+
+            confirmList.innerHTML = caseNumbers.map((cn, idx) =>
+                `<div class="confirmation-item">${idx + 1}. ${cn}</div>`
+            ).join('');
+
+            document.getElementById('caseCount').textContent = `${caseNumbers.length} case(s)`;
+            confirmPanel.style.display = 'block';
+
+            return true;
+        }
+
+        // Initialize
+        window.currentScraper = 'bloomberg';
+    </script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script src="/static/js/ui-components.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
