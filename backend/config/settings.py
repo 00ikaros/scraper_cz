@@ -10,9 +10,9 @@ from pathlib import Path
 class Settings(BaseSettings):
     """Application settings"""
 
-    # Bloomberg Law Credentials
-    bloomberg_username: str
-    bloomberg_password: str
+    # Bloomberg Law Credentials (optional at startup so deploy can succeed; required for Bloomberg features)
+    bloomberg_username: str = ""
+    bloomberg_password: str = ""
 
     # CMECF (PACER) Credentials
     cmecf_username: str = ""
