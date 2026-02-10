@@ -480,7 +480,6 @@ const UIComponents = {
         document.getElementById('progressContainer').style.display = 'none';
         document.getElementById('interactionPanel').style.display = 'none';
         document.getElementById('jobSummary').style.display = 'none';
-        document.getElementById('downloadsPanel').style.display = 'none';
         document.getElementById('downloadsList').innerHTML = '';
         
         this.updateState('idle', 'Ready to start scraping...');

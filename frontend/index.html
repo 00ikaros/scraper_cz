@@ -60,10 +60,10 @@
                 <!-- Download path setting -->
                 <div class="panel-section">
                     <h2>Download location</h2>
-                    <p class="settings-hint">Path on the server where PDFs will be saved (Bloomberg and PACER). Leave blank to use default.</p>
+                    <p class="settings-hint">Path where PDFs are saved. <strong>When using the app from a deployed server (e.g. Railway)</strong>, this path is on the server—files will not appear on your computer. Use the "Downloaded files" list below to download them. <strong>When running locally</strong>, use a path on your machine (e.g. <code>/Users/you/Desktop/downloads</code> or <code>C:\Downloads</code>). Leave blank to use the server default.</p>
                     <div class="form-group">
                         <label for="downloadPathInput">Folder path</label>
-                        <input type="text" id="downloadPathInput" placeholder="e.g. /app/downloads or C:\Downloads" class="download-path-input">
+                        <input type="text" id="downloadPathInput" placeholder="e.g. /app/downloads (server) or /Users/you/Desktop/downloads (local)" class="download-path-input">
                     </div>
                     <button type="button" class="btn btn-secondary" id="saveDownloadPathBtn">Save path</button>
                     <span id="downloadPathStatus" class="download-path-status"></span>
@@ -273,11 +273,17 @@
                 </div>
 
                 <!-- Downloaded Files -->
-                <div class="panel-section" id="downloadsPanel" style="display: none;">
+                <div class="panel-section" id="downloadsPanel">
                     <h3>Downloaded Files</h3>
                     <div class="downloads-list" id="downloadsList">
                         <!-- Downloaded files will appear here -->
                     </div>
+                    <p class="settings-hint" style="margin-top: 12px;">When the app runs on a server, files are saved there. Load and download them here. Each downloaded file is removed from the server automatically. Use "Clear files on server" to delete any remaining files.</p>
+                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" id="loadServerFilesBtn">Load files on server</button>
+                        <button type="button" class="btn btn-secondary" id="clearServerFilesBtn">Clear all files on server</button>
+                    </div>
+                    <div class="downloads-list" id="serverDownloadsList" style="margin-top: 8px;"></div>
                 </div>
 
                 <!-- Error Report (for CMECF) -->

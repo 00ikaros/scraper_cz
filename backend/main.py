@@ -2,7 +2,7 @@
 FastAPI application entry point
 Bloomberg Law & CMECF Scraper Backend
 """
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
@@ -135,6 +135,12 @@ async def auth_status(username: str = Depends(get_current_user)):
     return {"authenticated": True, "username": username}
 
 
+def _downloads_base_path() -> Path:
+    """Effective downloads base (from settings UI or config). Used for listing/serving files."""
+    base = get_download_path() or settings.downloads_base_dir
+    return Path(base).resolve()
+
+
 @app.get("/api/settings")
 async def get_settings(username: str = Depends(get_current_user)):
     """Get app settings (e.g. download path)."""
@@ -149,6 +155,89 @@ async def update_settings(
     """Update download path."""
     set_download_path(body.download_path or None)
     return {"download_path": get_download_path() or ""}
+
+
+@app.get("/api/downloads")
+async def list_downloads(username: str = Depends(get_current_user)):
+    """List downloaded files (under BLOOMBERG/ and PACER/) so users can download when app runs on a server."""
+    base = _downloads_base_path()
+    if not base.exists():
+        return {"files": []}
+    files = []
+    for sub in ("BLOOMBERG", "PACER"):
+        subdir = base / sub
+        if not subdir.is_dir():
+            continue
+        for f in subdir.iterdir():
+            if f.is_file():
+                files.append({"path": f"{sub}/{f.name}", "name": f.name})
+    files.sort(key=lambda x: x["path"])
+    return {"files": files}
+
+
+@app.get("/api/downloads/file")
+async def download_file(
+    path: str = Query(..., description="Relative path, e.g. PACER/11-22216-bam_198.pdf"),
+    username: str = Depends(get_current_user),
+):
+    """Serve a downloaded file. Path must be under BLOOMBERG/ or PACER/ (no path traversal)."""
+    if ".." in path or path.startswith("/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not path.startswith("PACER/") and not path.startswith("BLOOMBERG/"):
+        raise HTTPException(status_code=400, detail="Path must be PACER/... or BLOOMBERG/...")
+    base = _downloads_base_path().resolve()
+    full = (base / path).resolve()
+    try:
+        full.relative_to(base)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not full.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(full), filename=Path(path).name)
+
+
+@app.delete("/api/downloads/file")
+async def delete_downloaded_file(
+    path: str = Query(..., description="Relative path, e.g. PACER/11-22216-bam_198.pdf"),
+    username: str = Depends(get_current_user),
+):
+    """Delete a single file from the server (e.g. after user has downloaded it)."""
+    if ".." in path or path.startswith("/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not path.startswith("PACER/") and not path.startswith("BLOOMBERG/"):
+        raise HTTPException(status_code=400, detail="Path must be PACER/... or BLOOMBERG/...")
+    base = _downloads_base_path().resolve()
+    full = (base / path).resolve()
+    try:
+        full.relative_to(base)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not full.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    try:
+        full.unlink()
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"deleted": path}
+
+
+@app.delete("/api/downloads")
+async def clear_downloads(username: str = Depends(get_current_user)):
+    """Delete all files in the server download folders (BLOOMBERG/ and PACER/) to free space."""
+    base = _downloads_base_path().resolve()
+    deleted = 0
+    for sub in ("BLOOMBERG", "PACER"):
+        subdir = base / sub
+        if not subdir.is_dir():
+            continue
+        for f in subdir.iterdir():
+            if f.is_file():
+                try:
+                    f.unlink()
+                    deleted += 1
+                except OSError as e:
+                    logger.warning(f"Could not delete {f}: {e}")
+    return {"deleted": deleted, "message": f"Cleared {deleted} file(s) from server."}
 
 
 @app.websocket("/ws")

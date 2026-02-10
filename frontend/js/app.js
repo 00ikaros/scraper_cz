@@ -61,6 +61,9 @@ function initApp() {
     loadDownloadPath();
     document.getElementById('saveDownloadPathBtn').addEventListener('click', saveDownloadPath);
 
+    document.getElementById('loadServerFilesBtn').addEventListener('click', loadServerFiles);
+    document.getElementById('clearServerFilesBtn').addEventListener('click', clearServerFiles);
+
     document.getElementById('logoutBtn').addEventListener('click', () => {
         if (wsClient) wsClient.disconnect();
         Auth.logout();
@@ -102,6 +105,68 @@ async function saveDownloadPath() {
         statusEl.className = 'download-path-status error';
     }
     setTimeout(() => { statusEl.textContent = ''; }, 3000);
+}
+
+async function loadServerFiles() {
+    const listEl = document.getElementById('serverDownloadsList');
+    listEl.innerHTML = '<span class="log-message">Loading...</span>';
+    try {
+        const r = await fetch('/api/downloads', { headers: Auth.getAuthHeaders() });
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json();
+        const files = data.files || [];
+        if (files.length === 0) {
+            listEl.innerHTML = '<span class="log-message">No files on server (or path not set).</span>';
+            return;
+        }
+        listEl.innerHTML = files.map(f => {
+            const safePath = encodeURIComponent(f.path);
+            return `<div class="download-item" style="display: flex; align-items: center; justify-content: space-between;">
+                <div><span class="download-filename">${f.name}</span> <small class="download-entry-meta">${f.path}</small></div>
+                <button type="button" class="btn btn-secondary" style="margin-left: 8px;" data-path="${f.path.replace(/"/g, '&quot;')}">Download</button>
+            </div>`;
+        }).join('');
+        listEl.querySelectorAll('button[data-path]').forEach(btn => {
+            btn.addEventListener('click', () => downloadFileFromServer(btn.getAttribute('data-path')));
+        });
+    } catch (e) {
+        listEl.innerHTML = `<span class="log-message log-error">Failed to load: ${e.message}</span>`;
+    }
+}
+
+async function downloadFileFromServer(path) {
+    try {
+        const r = await fetch('/api/downloads/file?path=' + encodeURIComponent(path), { headers: Auth.getAuthHeaders() });
+        if (!r.ok) throw new Error(r.statusText);
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = path.split('/').pop() || 'download.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        // Remove file from server after successful download (auto-clean cache)
+        fetch('/api/downloads/file?path=' + encodeURIComponent(path), { method: 'DELETE', headers: Auth.getAuthHeaders() }).catch(() => {});
+        loadServerFiles();
+    } catch (e) {
+        console.error('Download failed:', e);
+        alert('Download failed: ' + e.message);
+    }
+}
+
+async function clearServerFiles() {
+    if (!confirm('Delete all files on the server? This cannot be undone. Use this after you have downloaded what you need.')) return;
+    try {
+        const r = await fetch('/api/downloads', { method: 'DELETE', headers: Auth.getAuthHeaders() });
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json();
+        const n = data.deleted != null ? data.deleted : 0;
+        alert(n > 0 ? `Cleared ${n} file(s) from the server.` : 'No files were on the server.');
+        loadServerFiles();
+    } catch (e) {
+        console.error('Clear failed:', e);
+        alert('Failed to clear server files: ' + e.message);
+    }
 }
 
 function setupLoginForm() {
